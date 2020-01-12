@@ -1,8 +1,10 @@
 #ifndef PID_H
 #define PID_H
 
+#include <list>
+
 class PID {
- public:
+public:
   /**
    * Constructor
    */
@@ -17,7 +19,7 @@ class PID {
    * Initialize PID.
    * @param (Kp_, Ki_, Kd_) The initial PID coefficients
    */
-  void Init(double Kp_, double Ki_, double Kd_);
+  void Init(double Kp, double Ki, double Kd);
 
   /**
    * Update the PID error variables given cross track error.
@@ -31,20 +33,35 @@ class PID {
    */
   double TotalError();
 
- private:
+  void control_value(double &throttle, double &steer);
+
+private:
   /**
    * PID Errors
    */
-  double p_error;
-  double i_error;
-  double d_error;
+  double p_error_;
+  double i_error_;
+  double d_error_;
+  std::list<double> cte_;
+  double diff_cte_;
+  double total_cte_;
+  double best_error_;
 
   /**
    * PID Coefficients
-   */ 
-  double Kp;
-  double Ki;
-  double Kd;
+   */
+  double Kp_;
+  double Ki_;
+  double Kd_;
+
+  /**
+   * PID Coefficients for throttle
+   */
+  double Kp2_;
+  double Ki2_;
+  double Kd2_;
+
+  void twiddle();
 };
 
-#endif  // PID_H
+#endif // PID_H

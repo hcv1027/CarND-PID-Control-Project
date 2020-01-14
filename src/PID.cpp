@@ -96,8 +96,8 @@ double PID::TotalError() {
 }
 
 void PID::control_value(double &throttle, double &steer) {
-  Kp_ = 0.2;
-  Ki_ = 0.004;
+  Kp_ = 0.3;
+  Ki_ = 0.002;
   Kd_ = 3.0;
   double cte = *(cte_.rbegin());
   double p_term = -Kp_ * cte;
@@ -119,9 +119,16 @@ void PID::control_value(double &throttle, double &steer) {
   double i_term2 = -Ki2_ * fabs(total_cte_);
   double error_term = p_term2 + d_term2 + i_term2;
   throttle = std::min(0.8, std::max(0.1, 0.8 + p_term2 + d_term2 + i_term2));
+  throttle = 0.5;
   // throttle = error_term;
-  printf("steer: %8.5f, throttle: %8.5f, cte: %8.5f, %8.5f, %8.5f,  "
-         "pid : % 10.5f, % 10.5f, % 10.5f\n ",
-         steer, throttle, cte, diff_cte_, total_cte_, p_term2, d_term2,
-         i_term2);
+  // Sequence: steer, cte, diff_cte, total_cte, p, d, i
+  printf("[%f,%f,%f,%f,%f,%f,%f],\n ", steer, cte, diff_cte_, total_cte_,
+         p_term, d_term, i_term);
+  // printf("steer: %8.5f, cte: %8.5f, %8.5f, %8.5f,  "
+  //        "pid : %10.5f, %10.5f, %10.5f\n ",
+  //        steer, cte, diff_cte_, total_cte_, p_term, d_term, i_term);
+  // printf("steer: %8.5f, throttle: %8.5f, cte: %8.5f, %8.5f, %8.5f,  "
+  //        "pid : %10.5f, %10.5f, %10.5f\n ",
+  //        steer, throttle, cte, diff_cte_, total_cte_, p_term, d_term,
+  //        i_term);
 }

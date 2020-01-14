@@ -105,15 +105,11 @@ int main() {
               default:
                 break;
               }
-              double error = pid.TotalError();
-              if (error < best_error) {
-              }
             }
           }
           pid.control_value(throttle, steer_value);
 
           bool reset = false;
-
           step++;
 
           // DEBUG

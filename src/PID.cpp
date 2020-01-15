@@ -56,7 +56,11 @@ double PID::TotalError() {
   int counter = 0;
   for (auto iter = cte_.rbegin(); iter != cte_.rend() /* && counter < 100 */;
        ++iter, ++counter) {
-    total_error += (*iter) * (*iter);
+    if (fabs(*iter) > 1.0) {
+      total_error += (*iter) * (*iter);
+    } else {
+      total_error += fabs(*iter);
+    }
   }
   /* for (double cte : cte_) {
     total_error += cte * cte;
@@ -83,13 +87,13 @@ void PID::control_value(double &throttle, double &steer) {
   Ki2_ = 0.01;
   Kd2_ = 3.0;
   // When the absolute of cte is large, we should decrease the throttle.
-  double p_term2 = -Kp2_ * fabs(cte);
+  // double p_term2 = -Kp2_ * fabs(cte);
   // When the differential of cte is increasing, we should decrease the
   // throttle. Otherwise, we can increase the throttle.
-  double d_term2 = -Kd2_ * diff_cte_;
-  double i_term2 = -Ki2_ * fabs(total_cte_);
-  double error_term = p_term2 + d_term2 + i_term2;
-  throttle = std::min(0.8, std::max(0.1, 0.8 + p_term2 + d_term2 + i_term2));
+  // double d_term2 = -Kd2_ * diff_cte_;
+  // double i_term2 = -Ki2_ * fabs(total_cte_);
+  // double error_term = p_term2 + d_term2 + i_term2;
+  // throttle = std::min(0.8, std::max(0.1, 0.8 + p_term2 + d_term2 + i_term2));
   throttle = 0.5;
   // throttle = error_term;
   // Sequence: steer, cte, diff_cte, total_cte, p, d, i

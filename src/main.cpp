@@ -40,17 +40,21 @@ int main() {
   double Kp = 0.2;
   double Ki = 0.004;
   double Kd = 3.0;
-  // pid.Init(Kp, Ki, Kd);
+  pid.Init(Kp, Ki, Kd);
 
-  unsigned int step = 0;
+  unsigned int twiddle_update_counter = 0;
   unsigned int update_params_idx = 0;
   unsigned int update_params_step = 0;
-  bool twiddle_update = true;
-  bool update_params = true;
-  std::vector<double> params = {0.0, 0.0, 0.0};
-  std::vector<double> d_params = {1.0, 1.0, 1.0};
+  bool twiddle_update = false;
+  std::vector<double> params = {0.2, 0.004, 3.0};
+  std::vector<double> d_params = {0.1, 0.001, 1.0};
   double best_error = std::numeric_limits<double>::infinity();
-  auto twiddle = [&]() {};
+  best_error = 1000.0;
+  // best_error = -1;
+  const double min_tolerance = 0.1;
+  const double reset_cte = 5.0;
+  const int circle_step = 1000;
+  const double error_tolerance = 300.0;
 
   h.onMessage([&](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                   uWS::OpCode opCode) {
@@ -68,10 +72,11 @@ int main() {
         if (event == "telemetry") {
           // j[1] is the data JSON object
           double cte = std::stod(j[1]["cte"].get<string>());
-          double speed = std::stod(j[1]["speed"].get<string>());
-          double angle = std::stod(j[1]["steering_angle"].get<string>());
+          // double speed = std::stod(j[1]["speed"].get<string>());
+          // double angle = std::stod(j[1]["steering_angle"].get<string>());
           double throttle = 0.3;
           double steer_value;
+          double reset_flag = false;
           /**
            * TODO: Calculate steering value here, remember the steering value is
            *   [-1, 1].
@@ -80,37 +85,75 @@ int main() {
            */
           pid.UpdateError(cte);
           if (twiddle_update) {
-            if (step % 20 == 0) {
+            if (twiddle_update_counter == circle_step) {
+              twiddle_update_counter = 0;
+              double error = fabs(pid.TotalError());
+              printf("\nupdate_params_idx: %d\n", update_params_idx);
+              printf("update_params_step: %d\n", update_params_step);
+              printf("d_params: %f, %f, %f\n", d_params[0], d_params[1],
+                     d_params[2]);
+              if (update_params_step != 0) {
+                printf("error: %f, best_error: %f\n", error, best_error);
+              }
               switch (update_params_step) {
               case 0: {
                 params[update_params_idx] += d_params[update_params_idx];
                 pid.Init(params[0], params[1], params[2]);
-                update_params_step = (update_params_step + 1) % 3;
+                reset_flag = true;
+                update_params_step++;
                 break;
               }
               case 1: {
-                params[update_params_idx] += 2 * d_params[update_params_idx];
-                pid.Init(params[0], params[1], params[2]);
-                update_params_step = (update_params_step + 1) % 3;
+                if (error < best_error) {
+                  best_error = error;
+                  d_params[update_params_idx] *= 1.1;
+                  update_params_idx++;
+                  update_params_step = 0;
+                } else {
+                  params[update_params_idx] -= 2 * d_params[update_params_idx];
+                  pid.Init(params[0], params[1], params[2]);
+                  reset_flag = true;
+                  update_params_step++;
+                }
                 break;
               }
               case 2: {
-                params[update_params_idx] += d_params[update_params_idx];
-                d_params[update_params_idx] *= 0.9;
-                pid.Init(params[0], params[1], params[2]);
-                update_params_step = (update_params_step + 1) % 3;
+                if (error < best_error) {
+                  best_error = error;
+                  d_params[update_params_idx] *= 1.1;
+                } else {
+                  params[update_params_idx] += d_params[update_params_idx];
+                  d_params[update_params_idx] *= 0.9;
+                  // pid.Init(params[0], params[1], params[2]);
+                }
+                update_params_step = 0;
+                update_params_idx++;
                 break;
               }
-
               default:
+                printf("Twiddle update error!");
                 break;
+              }
+              if (update_params_idx == params.size()) {
+                update_params_idx = 0;
+                double tolerance = d_params[0] + d_params[1] + d_params[2];
+                printf("tolerance: %f\n", tolerance);
+                if (tolerance <= min_tolerance) {
+                  // Stop twiddle
+                  twiddle_update = false;
+                }
               }
             }
           }
           pid.control_value(throttle, steer_value);
-
-          bool reset = false;
-          step++;
+          twiddle_update_counter++;
+          /* double error = pid.TotalError();
+          if (error > best_error) {
+            best_error = error;
+          }
+          printf(
+              "counter: %4d, cte: %10.5f, error: %12.5f, max_error: %12.5f\n",
+              twiddle_update_counter, cte, pid.TotalError(), best_error); */
 
           // DEBUG
           // std::cout << "CTE: " << cte << " Steering Value: " << steer_value
@@ -120,6 +163,12 @@ int main() {
           msgJson["steering_angle"] = steer_value;
           msgJson["throttle"] = throttle;
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
+          /* if (reset_flag) {
+            msg = "42[\"reset\",{}]";
+            printf("reset\n");
+            reset_flag = false;
+            twiddle_update_counter = 0;
+          } */
           // std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         } // end "telemetry" if
@@ -133,7 +182,7 @@ int main() {
 
   h.onConnection([&h](uWS::WebSocket<uWS::SERVER> ws, uWS::HttpRequest req) {
     std::cout << "Connected!!!" << std::endl;
-    printf("steer,cte,diff_cte,total_cte,p,d,i\n");
+    // printf("steer,cte,diff_cte,total_cte,p,d,i\n");
   });
 
   h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> ws, int code,

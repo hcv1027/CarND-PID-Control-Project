@@ -45,7 +45,6 @@ private:
   std::list<double> cte_;
   double diff_cte_;
   double total_cte_;
-  double best_error_;
 
   /**
    * PID Coefficients
@@ -60,8 +59,6 @@ private:
   double Kp2_;
   double Ki2_;
   double Kd2_;
-
-  void twiddle();
 };
 
 #endif // PID_H

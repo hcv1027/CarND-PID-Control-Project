@@ -46,24 +46,20 @@ int main() {
   unsigned int update_params_idx = 0;
   unsigned int update_params_step = 0;
   bool twiddle_update = true;
-  // std::vector<double> params = {0.0, 0.0, 0.0};
-  // std::vector<double> d_params = {1.0, 1.0, 1.0};
+  std::vector<double> params = {0.2, 0.002, 1.5};
+  std::vector<double> d_params = {0.6, 0.004, 3.0};
   // std::vector<double> params = {0.146123, 0.000, 1.346159};
   // std::vector<double> d_params = {0.026450, 0.009698, 0.080155};
-  std::vector<double> params = {0.109000, 0.000000,
-                                1.099481}; // 0.137829, 0.001458, 1.355095
   // std::vector<double> d_params = {0.014487, 0.009698, 0.080155};
-  std::vector<double> d_params = {0.014487, 0.002,
-                                  0.080155}; // 0.009316, 0.001052, 0.062997
+  // std::vector<double> params = {0.147145, 0.002405, 1.292098};
+  // std::vector<double> d_params = {0.008301, 0.000937, 0.062367};
   std::vector<double> best_params = params;
   std::vector<double> best_d_params = d_params;
   double min_score = std::numeric_limits<double>::infinity();
   std::list<double> speed_list;
-  // best_error = 680.0;
-  // best_error = -1;
-  const double min_tolerance = 0.001;
+  const double min_tolerance = 0.0005;
   const double bad_cte = 4.4;
-  const int circle_step = 1000;
+  const int circle_step = 2000;
 
   h.onMessage([&](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                   uWS::OpCode opCode) {
@@ -153,6 +149,9 @@ int main() {
       if (tolerance <= min_tolerance) {
         // Stop twiddle
         twiddle_update = false;
+        printf("Stop twiddle\n");
+        printf("Final params: %f, %f, %f\n", best_params[0], best_params[1],
+               best_params[2]);
       }
     }
 
@@ -167,9 +166,9 @@ int main() {
       printf("\nupdate_params_idx: %d\n", update_params_idx);
       printf("update_params_step: %d\n", update_params_step);
       printf("d_params: %f, %f, %f\n", d_params[0], d_params[1], d_params[2]);
-      printf("ave_speed: %f, score: %f, min_score: %f\n", ave_speed,
-             twiddle_update_counter * ave_speed, min_score);
-      printf("Best params: %f, %f, %f\n", params[0], params[1], params[2]);
+      printf("Current min_score: %f\n", min_score);
+      printf("Current best params: %f, %f, %f\n", best_params[0],
+             best_params[1], best_params[2]);
 
       switch (update_params_step) {
       case 0: {

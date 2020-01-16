@@ -46,13 +46,15 @@ int main() {
   unsigned int update_params_idx = 0;
   unsigned int update_params_step = 0;
   bool twiddle_update = true;
-  std::vector<double> params = {0.2, 0.002, 1.5};
-  std::vector<double> d_params = {0.6, 0.004, 3.0};
+  // std::vector<double> params = {0.2, 0.002, 1.5};
+  // std::vector<double> d_params = {0.6, 0.004, 3.0};
   // std::vector<double> params = {0.146123, 0.000, 1.346159};
   // std::vector<double> d_params = {0.026450, 0.009698, 0.080155};
   // std::vector<double> d_params = {0.014487, 0.009698, 0.080155};
   // std::vector<double> params = {0.147145, 0.002405, 1.292098};
   // std::vector<double> d_params = {0.008301, 0.000937, 0.062367};
+  std::vector<double> params = {0.160192, 0.005482, 1.692654};
+  std::vector<double> d_params = {0.003, 0.000045, 0.024901};
   std::vector<double> best_params = params;
   std::vector<double> best_d_params = d_params;
   double min_score = std::numeric_limits<double>::infinity();

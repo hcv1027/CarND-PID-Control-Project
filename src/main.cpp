@@ -46,20 +46,24 @@ int main() {
   unsigned int update_params_idx = 0;
   unsigned int update_params_step = 0;
   bool twiddle_update = true;
-  std::vector<double> params = {0.0, 0.0, 0.0};
-  std::vector<double> d_params = {1.0, 1.0, 1.0};
-  // std::vector<double> params = {0.2, 0.004, 3.0};
-  // std::vector<double> d_params = {0.1, 0.001, 1.0};
+  // std::vector<double> params = {0.0, 0.0, 0.0};
+  // std::vector<double> d_params = {1.0, 1.0, 1.0};
+  // std::vector<double> params = {0.146123, 0.000, 1.346159};
+  // std::vector<double> d_params = {0.026450, 0.009698, 0.080155};
+  std::vector<double> params = {0.109000, 0.000000,
+                                1.099481}; // 0.137829, 0.001458, 1.355095
+  // std::vector<double> d_params = {0.014487, 0.009698, 0.080155};
+  std::vector<double> d_params = {0.014487, 0.002,
+                                  0.080155}; // 0.009316, 0.001052, 0.062997
   std::vector<double> best_params = params;
   std::vector<double> best_d_params = d_params;
-  double best_error = std::numeric_limits<double>::infinity();
-  unsigned int best_step = 0;
+  double min_score = std::numeric_limits<double>::infinity();
   std::list<double> speed_list;
   // best_error = 680.0;
   // best_error = -1;
-  const double min_tolerance = 0.1;
+  const double min_tolerance = 0.001;
   const double bad_cte = 4.4;
-  const int circle_step = 2000;
+  const int circle_step = 1000;
 
   h.onMessage([&](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                   uWS::OpCode opCode) {
@@ -105,9 +109,10 @@ int main() {
               pid.control_value(throttle, steer_value);
               speed_list.push_back(speed);
               twiddle_update_counter++;
-              printf("counter: %4d, cte: %10.5f, error: %12.5f, min_error: "
+              /* printf("counter: %4d, cte: %10.5f, error: %12.5f, min_score: "
                      "%12.5f\n",
-                     twiddle_update_counter, cte, pid.TotalError(), best_error);
+                     twiddle_update_counter, cte, pid.TotalError(), min_score);
+               */
 
               json msgJson;
               msgJson["steering_angle"] = steer_value;
@@ -148,25 +153,23 @@ int main() {
       if (tolerance <= min_tolerance) {
         // Stop twiddle
         twiddle_update = false;
-      } /*  else {
-         update_params_idx = 0;
-       } */
+      }
     }
 
-    // double reset_flag = false;
-    // double early_stop = (fabs(cte) > bad_cte) ? true : false;
     if (twiddle_update) {
       double ave_speed = 0.0;
       for (double speed : speed_list) {
         ave_speed += speed;
       }
       ave_speed /= speed_list.size();
+      ave_speed *= (float(twiddle_update_counter) / circle_step);
       speed_list.clear();
       printf("\nupdate_params_idx: %d\n", update_params_idx);
       printf("update_params_step: %d\n", update_params_step);
       printf("d_params: %f, %f, %f\n", d_params[0], d_params[1], d_params[2]);
-      printf("ave_speed: %f, score: %f\n", ave_speed,
-             twiddle_update_counter * ave_speed);
+      printf("ave_speed: %f, score: %f, min_score: %f\n", ave_speed,
+             twiddle_update_counter * ave_speed, min_score);
+      printf("Best params: %f, %f, %f\n", params[0], params[1], params[2]);
 
       switch (update_params_step) {
       case 0: {
@@ -178,22 +181,12 @@ int main() {
         break;
       }
       case 1: {
-        /* if ((best_step >= circle_step * 40 && error < best_error) ||
-            twiddle_update_counter * ave_speed > best_step) {
-          if (best_step >= circle_step * 40) {
-            printf("best error: %f -> %f\n", best_error, error);
-            best_error = error;
-          } else {
-            printf("best step: %d -> %d\n", best_step, twiddle_update_counter);
-            best_step = twiddle_update_counter * ave_speed;
-          }
-        } */
         double error = fabs(pid.TotalError());
         double score = error / (twiddle_update_counter * ave_speed);
         printf("error: %f, score: %f\n", error, score);
-        if (score < best_error) {
-          printf("best error: %f -> %f\n", best_error, score);
-          best_error = score;
+        if (score < min_score) {
+          printf("best error: %f -> %f\n", min_score, score);
+          min_score = score;
           best_params = params;
           best_d_params = d_params;
           d_params[update_params_idx] *= 1.1;
@@ -218,9 +211,9 @@ int main() {
         double error = fabs(pid.TotalError());
         double score = error / (twiddle_update_counter * ave_speed);
         printf("error: %f, score: %f\n", error, score);
-        if (score < best_error) {
-          printf("best error: %f -> %f\n", best_error, score);
-          best_error = score;
+        if (score < min_score) {
+          printf("best error: %f -> %f\n", min_score, score);
+          min_score = score;
           best_params = params;
           best_d_params = d_params;
           d_params[update_params_idx] *= 1.1;
@@ -231,9 +224,6 @@ int main() {
                  temp[2], params[0], params[1], params[2]);
           d_params[update_params_idx] *= 0.9;
         }
-        // update_params_step = 0;
-        // update_params_idx++;
-        // For next parameter index, step 0
         update_params_idx = (update_params_idx + 1) % params.size();
         auto temp = params;
         params[update_params_idx] += d_params[update_params_idx];
@@ -250,7 +240,6 @@ int main() {
       pid.Init(params[0], params[1], params[2]);
       twiddle_update_counter = 0;
     }
-    // printf("steer,cte,diff_cte,total_cte,p,d,i\n");
   });
 
   h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> ws, int code,

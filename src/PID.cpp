@@ -29,7 +29,7 @@ void PID::Init(double Kp, double Ki, double Kd) {
   /**
    * TODO: Initialize PID coefficients (and errors, if needed)
    */
-  printf("Kp: %f, Ki: %f, Kd: %f\n", Kp, Ki, Kd);
+  printf("Set Kp: %f, Ki: %f, Kd: %f\n", Kp, Ki, Kd);
   Kp_ = Kp;
   Ki_ = Ki;
   Kd_ = Kd;
@@ -57,7 +57,12 @@ double PID::TotalError() {
   for (auto iter = cte_.rbegin(); iter != cte_.rend() /* && counter < 100 */;
        ++iter, ++counter) {
     if (fabs(*iter) > 1.0) {
-      total_error += (*iter) * (*iter);
+      // total_error += std::pow(*iter, std::ceil(*iter));
+      double error = std::pow(*iter, 2);
+      if (fabs(*iter) > 3.0) {
+        error *= 2.0;
+      }
+      total_error += error;
     } else {
       total_error += fabs(*iter);
     }

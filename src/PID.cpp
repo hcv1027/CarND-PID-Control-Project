@@ -12,13 +12,6 @@ PID::PID() {
   Kp_ = 0.0;
   Ki_ = 0.0;
   Kd_ = 0.0;
-  Kp2_ = 0.2;
-  Ki2_ = 0.006;
-  Kd2_ = 2.5;
-  p_error_ = 0.0;
-  i_error_ = 0.0;
-  d_error_ = 0.0;
-  // cte_ = 0.0;
   diff_cte_ = 0.0;
   total_cte_ = 0.0;
 }
@@ -67,19 +60,13 @@ double PID::TotalError() {
       total_error += fabs(*iter);
     }
   }
-  /* for (double cte : cte_) {
-    total_error += cte * cte;
-  } */
 
   return total_error;
-  // return total_cte_;
 }
 
-void PID::control_value(double &throttle, double &steer) {
-  // Kp_ = 0.3;
-  // Ki_ = 0.002;
-  // Kd_ = 3.0;
-  double cte = *(cte_.rbegin());
+void PID::control_value(double &steer) {
+  auto iter = cte_.rbegin();
+  double cte = *(iter);
   double p_term = -Kp_ * cte;
   double d_term = -Kd_ * diff_cte_;
   double i_term = -Ki_ * total_cte_;
@@ -87,28 +74,6 @@ void PID::control_value(double &throttle, double &steer) {
   /* printf("steer: %10.5f, cte: %10.5f, diff_cte_: %10.5f, total_cte: %10.5f, "
          "pid : % 10.5f, % 10.5f, % 10.5f\n ",
          steer, cte, diff_cte_, total_cte_, p_term, d_term, i_term); */
-
-  Kp2_ = 0.3;
-  Ki2_ = 0.01;
-  Kd2_ = 3.0;
-  // When the absolute of cte is large, we should decrease the throttle.
-  // double p_term2 = -Kp2_ * fabs(cte);
-  // When the differential of cte is increasing, we should decrease the
-  // throttle. Otherwise, we can increase the throttle.
-  // double d_term2 = -Kd2_ * diff_cte_;
-  // double i_term2 = -Ki2_ * fabs(total_cte_);
-  // double error_term = p_term2 + d_term2 + i_term2;
-  // throttle = std::min(0.8, std::max(0.1, 0.8 + p_term2 + d_term2 + i_term2));
-  throttle = 0.5;
-  // throttle = error_term;
-  // Sequence: steer, cte, diff_cte, total_cte, p, d, i
-  // printf("[%f,%f,%f,%f,%f,%f,%f],\n ", steer, cte, diff_cte_, total_cte_,
-  //        p_term, d_term, i_term);
-  // printf("steer: %8.5f, cte: %8.5f, %8.5f, %8.5f,  "
-  //        "pid : %10.5f, %10.5f, %10.5f\n ",
-  //        steer, cte, diff_cte_, total_cte_, p_term, d_term, i_term);
-  // printf("steer: %8.5f, throttle: %8.5f, cte: %8.5f, %8.5f, %8.5f,  "
-  //        "pid : %10.5f, %10.5f, %10.5f\n ",
-  //        steer, throttle, cte, diff_cte_, total_cte_, p_term, d_term,
-  //        i_term);
+  // printf("[%8.4f, %8.4f, %8.4f],\n ", p_term, d_term, i_term);
+  // printf("[%8.4f, %8.4f, %8.4f],\n ", cte_0, diff_cte_, total_cte_);
 }

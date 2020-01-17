@@ -30,38 +30,135 @@ string hasData(string s) {
   return "";
 }
 
+double get_throttle(double steer_value, double speed) {
+  double steer_lv = fabs(steer_value);
+  double throttle = 0.5;
+  if (steer_lv < 0.2) {
+    if (speed < 10.0) {
+      throttle = 1.0;
+    } else if (speed < 20.0) {
+      throttle = 0.9;
+    } else if (speed < 30.0) {
+      throttle = 0.8;
+    } else if (speed < 40.0) {
+      throttle = 0.7;
+    } else if (speed < 50.0) {
+      throttle = 0.6;
+    } else if (speed < 60.0) {
+      throttle = 0.5;
+    } else if (speed < 70.0) {
+      throttle = 0.4;
+    }
+  } else if (0.2 <= steer_lv && steer_lv < 0.4) {
+    if (speed < 10.0) {
+      throttle = 0.8;
+    } else if (speed < 20.0) {
+      throttle = 0.7;
+    } else if (speed < 30.0) {
+      throttle = 0.6;
+    } else if (speed < 40.0) {
+      throttle = 0.5;
+    } else if (speed < 50.0) {
+      throttle = 0.4;
+    } else if (speed < 60.0) {
+      throttle = 0.3;
+    } else if (speed < 70.0) {
+      throttle = 0.2;
+    }
+  } else if (0.4 <= steer_lv && steer_lv < 0.6) {
+    if (speed < 10.0) {
+      throttle = 0.7;
+    } else if (speed < 20.0) {
+      throttle = 0.6;
+    } else if (speed < 30.0) {
+      throttle = 0.5;
+    } else if (speed < 40.0) {
+      throttle = 0.4;
+    } else if (speed < 50.0) {
+      throttle = 0.3;
+    } else if (speed < 60.0) {
+      throttle = 0.2;
+    } else if (speed < 70.0) {
+      throttle = 0.1;
+    }
+  } else if (0.6 <= steer_lv && steer_lv < 0.8) {
+    if (speed < 10.0) {
+      throttle = 0.6;
+    } else if (speed < 20.0) {
+      throttle = 0.5;
+    } else if (speed < 30.0) {
+      throttle = 0.4;
+    } else if (speed < 40.0) {
+      throttle = 0.3;
+    } else if (speed < 50.0) {
+      throttle = 0.2;
+    } else if (speed < 60.0) {
+      throttle = 0.1;
+    } else if (speed < 70.0) {
+      throttle = 0.0;
+    }
+  } else {
+    if (speed < 10.0) {
+      throttle = 0.3;
+    } else if (speed < 20.0) {
+      throttle = 0.2;
+    } else if (speed < 30.0) {
+      throttle = 0.1;
+    } else if (speed < 40.0) {
+      throttle = -0.1;
+    } else if (speed < 50.0) {
+      throttle = -0.2;
+    } else if (speed < 60.0) {
+      throttle = -0.3;
+    } else if (speed < 70.0) {
+      throttle = -0.4;
+    }
+  }
+
+  return throttle;
+}
+
 int main() {
   uWS::Hub h;
 
-  PID pid;
+  PID steer_pid;
+  PID throttle_pid;
   /**
    * TODO: Initialize the pid variable.
    */
   double Kp = 0.2;
   double Ki = 0.004;
   double Kd = 3.0;
-  pid.Init(Kp, Ki, Kd);
+  steer_pid.Init(Kp, Ki, Kd);
 
   unsigned int twiddle_update_counter = 0;
   unsigned int update_params_idx = 0;
   unsigned int update_params_step = 0;
-  bool twiddle_update = true;
-  // std::vector<double> params = {0.2, 0.002, 1.5};
-  // std::vector<double> d_params = {0.6, 0.004, 3.0};
+  bool twiddle_update = false;
+  std::vector<double> params = {0.260000, 0.006, 1.7};
+  std::vector<double> d_params = {0.01, 0.001, 0.5};
   // std::vector<double> params = {0.146123, 0.000, 1.346159};
   // std::vector<double> d_params = {0.026450, 0.009698, 0.080155};
   // std::vector<double> d_params = {0.014487, 0.009698, 0.080155};
   // std::vector<double> params = {0.147145, 0.002405, 1.292098};
   // std::vector<double> d_params = {0.008301, 0.000937, 0.062367};
-  std::vector<double> params = {0.160192, 0.005482, 1.692654};
-  std::vector<double> d_params = {0.003, 0.000045, 0.024901};
+  // std::vector<double> params = {0.160192, 0.005482, 1.692654};
+  // std::vector<double> d_params = {0.003, 0.000045, 0.024901};
   std::vector<double> best_params = params;
   std::vector<double> best_d_params = d_params;
+  steer_pid.Init(params[0], params[1], params[2]);
   double min_score = std::numeric_limits<double>::infinity();
   std::list<double> speed_list;
-  const double min_tolerance = 0.0005;
+  const double min_tolerance = 0.01;
   const double bad_cte = 4.4;
-  const int circle_step = 2000;
+  const int circle_step = 1000;
+
+  const double target_speed = 38.5;
+  std::vector<double> params_2 = {2.5, 0.0, 0.0};
+  std::vector<double> d_params_2 = {1.0, 1.0, 1.0};
+  std::vector<double> best_params_2 = params;
+  std::vector<double> best_d_params_2 = d_params;
+  throttle_pid.Init(params_2[0], params_2[1], params_2[2]);
 
   h.onMessage([&](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                   uWS::OpCode opCode) {
@@ -103,9 +200,10 @@ int main() {
               // std::cout << msg << std::endl;
               ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
             } else {
-              pid.UpdateError(cte);
-              pid.control_value(throttle, steer_value);
+              steer_pid.UpdateError(cte);
+              steer_pid.control_value(steer_value);
               speed_list.push_back(speed);
+              throttle = get_throttle(steer_value, speed);
               twiddle_update_counter++;
               /* printf("counter: %4d, cte: %10.5f, error: %12.5f, min_score: "
                      "%12.5f\n",
@@ -121,12 +219,22 @@ int main() {
             }
           } else {
             // Normal flow
-            pid.UpdateError(cte);
-            pid.control_value(throttle, steer_value);
+            steer_pid.UpdateError(cte);
+            steer_pid.control_value(steer_value);
+            // throttle = get_throttle(steer_value, speed);
+            // printf("throttle_pid\n");
+            double speed_cte = speed - target_speed;
+            printf("[%f],", speed_cte);
+            throttle_pid.UpdateError(speed_cte);
+            throttle_pid.control_value(throttle);
 
             // DEBUG
-            // std::cout << "CTE: " << cte << " Steering Value: " << steer_value
-            //           << std::endl;
+            // printf("steer: %6.3f, speed: %4.2f, throttle: %4.1f\n",
+            // steer_value,
+            //        speed, throttle);
+            /* std::cout << "CTE: " << cte << " Steering Value: " <<
+               steer_value
+                      << std::endl; */
             json msgJson;
             msgJson["steering_angle"] = steer_value;
             msgJson["throttle"] = throttle;
@@ -158,13 +266,13 @@ int main() {
     }
 
     if (twiddle_update) {
-      double ave_speed = 0.0;
+      /* double ave_speed = 0.0;
       for (double speed : speed_list) {
         ave_speed += speed;
       }
       ave_speed /= speed_list.size();
       ave_speed *= (float(twiddle_update_counter) / circle_step);
-      speed_list.clear();
+      speed_list.clear(); */
       printf("\nupdate_params_idx: %d\n", update_params_idx);
       printf("update_params_step: %d\n", update_params_step);
       printf("d_params: %f, %f, %f\n", d_params[0], d_params[1], d_params[2]);
@@ -182,8 +290,8 @@ int main() {
         break;
       }
       case 1: {
-        double error = fabs(pid.TotalError());
-        double score = error / (twiddle_update_counter * ave_speed);
+        double error = fabs(steer_pid.TotalError());
+        double score = error / (twiddle_update_counter /*  * ave_speed */);
         printf("error: %f, score: %f\n", error, score);
         if (score < min_score) {
           printf("best error: %f -> %f\n", min_score, score);
@@ -209,8 +317,8 @@ int main() {
         break;
       }
       case 2: {
-        double error = fabs(pid.TotalError());
-        double score = error / (twiddle_update_counter * ave_speed);
+        double error = fabs(steer_pid.TotalError());
+        double score = error / (twiddle_update_counter /*  * ave_speed */);
         printf("error: %f, score: %f\n", error, score);
         if (score < min_score) {
           printf("best error: %f -> %f\n", min_score, score);
@@ -238,7 +346,7 @@ int main() {
         break;
       }
 
-      pid.Init(params[0], params[1], params[2]);
+      steer_pid.Init(params[0], params[1], params[2]);
       twiddle_update_counter = 0;
     }
   });

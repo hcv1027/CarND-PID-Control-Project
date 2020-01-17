@@ -33,15 +33,12 @@ public:
    */
   double TotalError();
 
-  void control_value(double &throttle, double &steer);
+  void control_value(double &steer);
 
 private:
   /**
    * PID Errors
    */
-  double p_error_;
-  double i_error_;
-  double d_error_;
   std::list<double> cte_;
   double diff_cte_;
   double total_cte_;
@@ -52,13 +49,6 @@ private:
   double Kp_;
   double Ki_;
   double Kd_;
-
-  /**
-   * PID Coefficients for throttle
-   */
-  double Kp2_;
-  double Ki2_;
-  double Kd2_;
 };
 
 #endif // PID_H

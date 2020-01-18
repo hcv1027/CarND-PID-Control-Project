@@ -2,7 +2,6 @@
 #include <cmath>
 #include <limits>
 #include <stdio.h>
-#include <vector>
 
 /**
  * TODO: Complete the PID class. You may add any additional desired functions.
@@ -46,11 +45,8 @@ double PID::TotalError() {
    */
   // TODO: Add your total error calc here!
   double total_error = 0.0;
-  int counter = 0;
-  for (auto iter = cte_.rbegin(); iter != cte_.rend() /* && counter < 100 */;
-       ++iter, ++counter) {
+  for (auto iter = cte_.rbegin(); iter != cte_.rend(); ++iter) {
     if (fabs(*iter) > 1.0) {
-      // total_error += std::pow(*iter, std::ceil(*iter));
       double error = std::pow(*iter, 2);
       if (fabs(*iter) > 3.0) {
         error *= 2.0;

@@ -126,22 +126,12 @@ int main() {
   /**
    * TODO: Initialize the pid variable.
    */
-  double Kp = 0.2;
-  double Ki = 0.004;
-  double Kd = 3.0;
-  steer_pid.Init(Kp, Ki, Kd);
-
   unsigned int twiddle_update_counter = 0;
   unsigned int update_params_idx = 0;
   unsigned int update_params_step = 0;
   bool twiddle_update = false;
-  std::vector<double> params = {0.260000, 0.006, 1.7};
+  std::vector<double> params = {0.171, 0.000015, 1.0305};
   std::vector<double> d_params = {0.01, 0.001, 0.5};
-  // std::vector<double> params = {0.146123, 0.000, 1.346159};
-  // std::vector<double> d_params = {0.026450, 0.009698, 0.080155};
-  // std::vector<double> d_params = {0.014487, 0.009698, 0.080155};
-  // std::vector<double> params = {0.147145, 0.002405, 1.292098};
-  // std::vector<double> d_params = {0.008301, 0.000937, 0.062367};
   // std::vector<double> params = {0.160192, 0.005482, 1.692654};
   // std::vector<double> d_params = {0.003, 0.000045, 0.024901};
   std::vector<double> best_params = params;
@@ -154,10 +144,7 @@ int main() {
   const int circle_step = 1000;
 
   const double target_speed = 38.5;
-  std::vector<double> params_2 = {2.5, 0.0, 0.0};
-  std::vector<double> d_params_2 = {1.0, 1.0, 1.0};
-  std::vector<double> best_params_2 = params;
-  std::vector<double> best_d_params_2 = d_params;
+  std::vector<double> params_2 = {20.0, 0.00005, 8.0};
   throttle_pid.Init(params_2[0], params_2[1], params_2[2]);
 
   h.onMessage([&](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
@@ -187,23 +174,25 @@ int main() {
            * NOTE: Feel free to play around with the throttle and speed.
            *   Maybe use another PID controller to control the speed!
            */
+
+          // Compute throttle
+          double speed_cte = speed - target_speed;
+          throttle_pid.UpdateError(speed_cte);
+          throttle_pid.control_value(throttle);
+
           if (twiddle_update) {
             // Tune PID hyperparameters by twiddle method
             double early_stop = (fabs(cte) > bad_cte) ? true : false;
             if (early_stop || twiddle_update_counter == circle_step) {
               if (early_stop) {
                 printf("Too bad, reset: %f\n", cte);
-                // pid.UpdateError(std::numeric_limits<double>::infinity());
               }
-              // twiddle_update_counter = 0;
               std::string msg = "42[\"reset\",{}]";
-              // std::cout << msg << std::endl;
               ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
             } else {
               steer_pid.UpdateError(cte);
               steer_pid.control_value(steer_value);
               speed_list.push_back(speed);
-              throttle = get_throttle(steer_value, speed);
               twiddle_update_counter++;
               /* printf("counter: %4d, cte: %10.5f, error: %12.5f, min_score: "
                      "%12.5f\n",
@@ -221,20 +210,12 @@ int main() {
             // Normal flow
             steer_pid.UpdateError(cte);
             steer_pid.control_value(steer_value);
-            // throttle = get_throttle(steer_value, speed);
-            // printf("throttle_pid\n");
-            double speed_cte = speed - target_speed;
-            printf("[%f],", speed_cte);
-            throttle_pid.UpdateError(speed_cte);
-            throttle_pid.control_value(throttle);
 
             // DEBUG
             // printf("steer: %6.3f, speed: %4.2f, throttle: %4.1f\n",
-            // steer_value,
-            //        speed, throttle);
+            // steer_value, speed, throttle);
             /* std::cout << "CTE: " << cte << " Steering Value: " <<
-               steer_value
-                      << std::endl; */
+               steer_value << std::endl; */
             json msgJson;
             msgJson["steering_angle"] = steer_value;
             msgJson["throttle"] = throttle;
@@ -266,13 +247,6 @@ int main() {
     }
 
     if (twiddle_update) {
-      /* double ave_speed = 0.0;
-      for (double speed : speed_list) {
-        ave_speed += speed;
-      }
-      ave_speed /= speed_list.size();
-      ave_speed *= (float(twiddle_update_counter) / circle_step);
-      speed_list.clear(); */
       printf("\nupdate_params_idx: %d\n", update_params_idx);
       printf("update_params_step: %d\n", update_params_step);
       printf("d_params: %f, %f, %f\n", d_params[0], d_params[1], d_params[2]);
@@ -291,7 +265,7 @@ int main() {
       }
       case 1: {
         double error = fabs(steer_pid.TotalError());
-        double score = error / (twiddle_update_counter /*  * ave_speed */);
+        double score = error / (twiddle_update_counter);
         printf("error: %f, score: %f\n", error, score);
         if (score < min_score) {
           printf("best error: %f -> %f\n", min_score, score);
@@ -318,7 +292,7 @@ int main() {
       }
       case 2: {
         double error = fabs(steer_pid.TotalError());
-        double score = error / (twiddle_update_counter /*  * ave_speed */);
+        double score = error / (twiddle_update_counter);
         printf("error: %f, score: %f\n", error, score);
         if (score < min_score) {
           printf("best error: %f -> %f\n", min_score, score);

@@ -3,6 +3,20 @@ Self-Driving Car Engineer Nanodegree Program
 
 ---
 
+## Descriptions
+
+In project, I will use PID controller to control the vehicle's steer to let it drive in the center of the lane.
+
+### P: Proportional factor
+
+The output of the proportional factor is the product of gain `Kp` and measured error `cte` (cross track error). The higher the proportional gain `Kp` or the error `cte`, the output of proportional factor is higher, too. Setting `Kp` too high will cause the vehicle repeatedly overshoot (oscillation), but setting it too low will let vehicle drive out of the big curve. [This video](./video/p.mkv) is the result of setting `Kp` too high.
+
+### D: Derivate factor
+
+### I: Integral factor
+
+### Tuning hyperparameter: Twiddle
+
 ## Dependencies
 
 * cmake >= 3.5

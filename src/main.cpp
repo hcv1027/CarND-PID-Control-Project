@@ -30,94 +30,6 @@ string hasData(string s) {
   return "";
 }
 
-double get_throttle(double steer_value, double speed) {
-  double steer_lv = fabs(steer_value);
-  double throttle = 0.5;
-  if (steer_lv < 0.2) {
-    if (speed < 10.0) {
-      throttle = 1.0;
-    } else if (speed < 20.0) {
-      throttle = 0.9;
-    } else if (speed < 30.0) {
-      throttle = 0.8;
-    } else if (speed < 40.0) {
-      throttle = 0.7;
-    } else if (speed < 50.0) {
-      throttle = 0.6;
-    } else if (speed < 60.0) {
-      throttle = 0.5;
-    } else if (speed < 70.0) {
-      throttle = 0.4;
-    }
-  } else if (0.2 <= steer_lv && steer_lv < 0.4) {
-    if (speed < 10.0) {
-      throttle = 0.8;
-    } else if (speed < 20.0) {
-      throttle = 0.7;
-    } else if (speed < 30.0) {
-      throttle = 0.6;
-    } else if (speed < 40.0) {
-      throttle = 0.5;
-    } else if (speed < 50.0) {
-      throttle = 0.4;
-    } else if (speed < 60.0) {
-      throttle = 0.3;
-    } else if (speed < 70.0) {
-      throttle = 0.2;
-    }
-  } else if (0.4 <= steer_lv && steer_lv < 0.6) {
-    if (speed < 10.0) {
-      throttle = 0.7;
-    } else if (speed < 20.0) {
-      throttle = 0.6;
-    } else if (speed < 30.0) {
-      throttle = 0.5;
-    } else if (speed < 40.0) {
-      throttle = 0.4;
-    } else if (speed < 50.0) {
-      throttle = 0.3;
-    } else if (speed < 60.0) {
-      throttle = 0.2;
-    } else if (speed < 70.0) {
-      throttle = 0.1;
-    }
-  } else if (0.6 <= steer_lv && steer_lv < 0.8) {
-    if (speed < 10.0) {
-      throttle = 0.6;
-    } else if (speed < 20.0) {
-      throttle = 0.5;
-    } else if (speed < 30.0) {
-      throttle = 0.4;
-    } else if (speed < 40.0) {
-      throttle = 0.3;
-    } else if (speed < 50.0) {
-      throttle = 0.2;
-    } else if (speed < 60.0) {
-      throttle = 0.1;
-    } else if (speed < 70.0) {
-      throttle = 0.0;
-    }
-  } else {
-    if (speed < 10.0) {
-      throttle = 0.3;
-    } else if (speed < 20.0) {
-      throttle = 0.2;
-    } else if (speed < 30.0) {
-      throttle = 0.1;
-    } else if (speed < 40.0) {
-      throttle = -0.1;
-    } else if (speed < 50.0) {
-      throttle = -0.2;
-    } else if (speed < 60.0) {
-      throttle = -0.3;
-    } else if (speed < 70.0) {
-      throttle = -0.4;
-    }
-  }
-
-  return throttle;
-}
-
 int main() {
   uWS::Hub h;
 
@@ -138,7 +50,6 @@ int main() {
   std::vector<double> best_d_params = d_params;
   steer_pid.Init(params[0], params[1], params[2]);
   double min_score = std::numeric_limits<double>::infinity();
-  std::list<double> speed_list;
   const double min_tolerance = 0.01;
   const double bad_cte = 4.4;
   const int circle_step = 1000;
@@ -192,7 +103,6 @@ int main() {
             } else {
               steer_pid.UpdateError(cte);
               steer_pid.control_value(steer_value);
-              speed_list.push_back(speed);
               twiddle_update_counter++;
               /* printf("counter: %4d, cte: %10.5f, error: %12.5f, min_score: "
                      "%12.5f\n",

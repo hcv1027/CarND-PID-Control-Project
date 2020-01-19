@@ -22,7 +22,7 @@ The real world is not perfect, it always exists the system bias, so we need one 
 ### Tuning hyperparameter: Twiddle
 
 I also implement the twiddle algorithm to auto fine tune the hyperparameters, but sadly speaking, I don't think the result is better than the one tuned by myself. So the final hyperparameters are the one tuned by myself. I think there are two problems:<p>
-1. The scale of three gains are too different, the proper range of `Kp` term is about 0.1~0.2. The range of `Kd` is about 1.0~3.0. And the range of `Ki` is about 0.00001~0.00002. So if I set the twiddle torrance to 0.001, the twiddle will have little chance to fine the best`Ki` gain. But if I set the torrance to a very small value, it will take a very long time to get the final result.
+1. The scale of three gains are too different, the proper range of `Kp` term is about 0.1 ~ 0.2. The range of `Kd` is about 1.0 ~ 3.0. And the range of `Ki` is about 0.00001 ~ 0.00002. So if I set the twiddle torrance to 0.001, the twiddle will have little chance to fine the best`Ki` gain. But if I set the torrance to a very small value, it will take a very long time to get the final result.
 2. The initial guess of hyperparamters has a big influence on the final result. If the initial guess is bad, then twiddle will have no chance to reach the final good one.
 
 ### Throttle

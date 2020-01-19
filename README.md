@@ -5,17 +5,30 @@ Self-Driving Car Engineer Nanodegree Program
 
 ## Descriptions
 
-In project, I will use PID controller to control the vehicle's steer to let it drive in the center of the lane.
+In this project, I implement a PID controller to control the vehicle's steer to let it drive in the center of the lane.
 
 ### P: Proportional factor
 
-The output of the proportional factor is the product of gain `Kp` and measured error `cte` (cross track error). The higher the proportional gain `Kp` or the error `cte`, the output of proportional factor is higher, too. Setting `Kp` too high will cause the vehicle repeatedly overshoot (oscillation), but setting it too low will let vehicle drive out of the big curve. [This video](./video/p.mkv) is the result of setting `Kp` too high.
+The output of the proportional factor is the product of gain `Kp` and measured error `cte` (cross track error). The higher the proportional gain `Kp` or the error `cte`, the output of proportional factor is higher, too. Setting `Kp` too high will cause the vehicle repeatedly overshoot (oscillation), but setting it too low will let vehicle drive out of the big curve. [This video](https://youtu.be/PAan8YH93cE) is the result of only using the proportional factor, setting `Kp` as `0.171`. You can see that the vehicle repeatly overshoot and finally drive out of the track.
 
-### D: Derivate factor
+### D: Derivative factor
+
+The derivative factor is used to overcome the overshoot problem. It considers the rate of change of `cte` with respect to time, output the product of gain `Kd` and the rate of change of `cte`. [This video]( https://youtu.be/wfIoij7OXaw) show the result of pd-controller with the `Kp = 0.171` and `Kd = 1.0305`. You can see that the vehicle can successfully drive a lap around the track now, and the oscillation has reduced a lot.
 
 ### I: Integral factor
 
+The real world is not perfect, it always exists the system bias, so we need one more factor to handle it, the integral factor. It integrates the error over a period of time, and output the product of gain `Ki` and the total error. If the current total error is low, it outputs a low value, too. Otherwise it will have obvious effect to let vehicle drive back to center of the track quickly. [This video]( https://youtu.be/bR08o61I8nc) shows the result of fully PID-controller with the `Kp = 0.171`, `Kd = 1.0305` and `Ki = 0.000015`. Comparing with the pd-controller, you can notice that the vehicle drives more smoothly at certain big turns.
+
 ### Tuning hyperparameter: Twiddle
+
+I also implement the twiddle algorithm to auto fine tune the hyperparameters, but sadly speaking, I don't think the result is better than the one tuned by myself. So the final hyperparameters are the one tuned by myself. I think there are two problems:<p>
+1. The scale of three gains are too different, the proper range of `Kp` term is about 0.1~0.2. The range of `Kd` is about 1.0~3.0. And the range of `Ki` is about 0.00001~0.00002. So if I set the twiddle torrance to 0.001, the twiddle will have little chance to fine the best`Ki` gain. But if I set the torrance to a very small value, it will take a very long time to get the final result.
+2. The initial guess of hyperparamters has a big influence on the final result. If the initial guess is bad, then twiddle will have no chance to reach the final good one.
+
+### Throttle
+
+I create another pid-controller to control the throttle. In the turning process, I found that the highest steady speed is around 38~39 mph. So I use a pid-controller to control the vehicle's throttle to reach the target speed 38.5 mph. But I didn't pay too much time on this pid-controller's hyperparameters. Just let it can drive  smoothly.
+
 
 ## Dependencies
 

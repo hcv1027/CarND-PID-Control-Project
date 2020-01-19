@@ -9,7 +9,7 @@ In this project, I implement a PID controller to control the vehicle's steer to 
 
 ### P: Proportional factor
 
-The output of the proportional factor is the product of gain `Kp` and measured error `cte` (cross track error). The higher the proportional gain `Kp` or the error `cte`, the output of proportional factor is higher, too. Setting `Kp` too high will cause the vehicle repeatedly overshoot (oscillation), but setting it too low will let vehicle drive out of the big curve. [This video](https://youtu.be/PAan8YH93cE) is the result of only using the proportional factor, setting `Kp` as `0.171`. You can see that the vehicle repeatly overshoot and finally drive out of the track.
+The output of the proportional factor is the product of gain `Kp` and measured error `cte` (cross track error). The higher the proportional gain `Kp` or the error `cte`, the output of proportional factor is higher, too. Setting `Kp` too high will cause the vehicle overshoot too much, but setting it too low will let vehicle drive out of the big curve. [This video](https://youtu.be/PAan8YH93cE) is the result of only using the proportional factor, setting `Kp` as `0.171`. You can see that the vehicle overshoot too much and finally drive out of the track. Also, only use proportional factor will cause the effect of oscillation.
 
 ### D: Derivative factor
 
